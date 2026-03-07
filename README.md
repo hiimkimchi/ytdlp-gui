@@ -51,7 +51,7 @@ ytdlpgui
 ## Build a standalone .app bundle
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ytdlp-wrapper.git
+git clone https://github.com/hiimkimchi/ytdlp-wrapper.git
 cd ytdlp-wrapper
 chmod +x extras/build_app.sh
 ./extras/build_app.sh
