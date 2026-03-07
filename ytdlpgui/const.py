@@ -1,0 +1,46 @@
+THEMES = {
+    "dark": {
+        "BG":         "#0f0f0f",
+        "SURFACE":    "#1a1a1a",
+        "BORDER":     "#2a2a2a",
+        "BTN":        "#2e2e2e",
+        "ACCENT":     "#e53935",
+        "ACCENT_FG":  "#ffffff",
+        "PRIMARY_BG": "#66bb6a",
+        "PRIMARY_FG": "#000000",
+        "TOGGLE_ON":  "#ef9a9a",
+        "TOGGLE_FG":  "#4a1010",
+        "MUTED":      "#555555",
+        "TEXT":       "#e8e8e8",
+        "TEXT_DIM":   "#888888",
+        "RED":        "#e53935",
+        "GREEN":      "#43a047",
+    },
+    "light": {
+        "BG":         "#f5f5f5",
+        "SURFACE":    "#ffffff",
+        "BORDER":     "#d0d0d0",
+        "BTN":        "#e8e8e8",
+        "ACCENT":     "#c62828",
+        "ACCENT_FG":  "#ffffff",
+        "PRIMARY_BG": "#a5d6a7",
+        "PRIMARY_FG": "#000000",
+        "TOGGLE_ON":  "#ef9a9a",
+        "TOGGLE_FG":  "#4a1010",
+        "MUTED":      "#6b6b6b",
+        "TEXT":       "#1a1a1a",
+        "TEXT_DIM":   "#555555",
+        "RED":        "#c62828",
+        "GREEN":      "#2e7d32",
+    },
+}
+
+
+QUALITY_MAP = {
+    "Best":  "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+    "1080p": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]",
+    "720p":  "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]",
+    "480p":  "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]",
+    "360p":  "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]",
+    "Worst": "worstvideo+worstaudio/worst",
+}
