@@ -22,7 +22,17 @@ cp extras/launch.sh "${MACOS}/launch.sh"
 chmod +x "${MACOS}/launch.sh"
 
 echo "→ Installing package into app venv"
-python3 -m venv "${RESOURCES}/venv"
+for py in python3.12 python3; do
+  if command -v "$py" &>/dev/null && "$py" -c "import tkinter" 2>/dev/null; then
+    PYTHON="$py"
+    break
+  fi
+done
+if [ -z "${PYTHON:-}" ]; then
+  echo "Warning: no Python with tkinter found. Install with: brew install python-tk@3.12"
+  PYTHON=python3
+fi
+"$PYTHON" -m venv "${RESOURCES}/venv"
 "${RESOURCES}/venv/bin/pip" install --quiet --upgrade pip
 "${RESOURCES}/venv/bin/pip" install --quiet .
 
