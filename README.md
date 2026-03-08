@@ -1,6 +1,6 @@
 # YTDLP Gui
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![Homebrew](https://img.shields.io/homebrew/v/ytdlpgui?tap=hiimkimchi/ytdlpgui)](https://github.com/hiimkimchi/homebrew-ytdlpgui)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![Homebrew](https://img.shields.io/badge/homebrew-tap-orange?logo=homebrew)](https://github.com/hiimkimchi/homebrew-ytdlpgui)
 
 A minimal macOS GUI wrapper for [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
