@@ -1,5 +1,7 @@
 # YTDLP Gui
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![Homebrew](https://img.shields.io/homebrew/v/ytdlpgui?tap=hiimkimchi/ytdlpgui)](https://github.com/hiimkimchi/homebrew-ytdlpgui)
+
 A minimal macOS GUI wrapper for [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
 ---
@@ -86,10 +88,10 @@ The .app bundles its own Python and dependencies; **yt-dlp** and **ffmpeg** must
 
 ## Requirements
 
-| Dependency | Version  | Notes                        |
-|------------|----------|------------------------------|
-| Python     | ≥ 3.10   | tkinter included on macOS    |
-| yt-dlp     | latest   | `brew install yt-dlp`        |
-| ffmpeg     | any      | needed for merging & audio   |
+| Dependency | Version  |
+|------------|----------|
+| Python     | ≥ 3.10   |
+| yt-dlp     | latest   |
+| ffmpeg     | any      |
 
 ---
