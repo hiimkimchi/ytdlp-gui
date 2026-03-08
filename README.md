@@ -17,10 +17,9 @@ A minimal macOS GUI wrapper for [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
 ## Install via Homebrew (recommended)
 
-First, tap the custom formula:
 
 ```bash
-brew tap hiimkimchi/ytdlpgui https://github.com/hiimkimchi/ytdlp-gui
+brew tap hiimkimchi/ytdlpgui
 brew install ytdlpgui
 ```
 
@@ -51,8 +50,8 @@ ytdlpgui
 ## Build a standalone .app bundle
 
 ```bash
-git clone https://github.com/hiimkimchi/ytdlp-wrapper.git
-cd ytdlp-wrapper
+git clone https://github.com/hiimkimchi/ytdlp-gui.git
+cd ytdlp-gui
 chmod +x extras/build_app.sh
 ./extras/build_app.sh
 
