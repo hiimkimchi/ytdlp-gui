@@ -15,21 +15,27 @@ A minimal macOS GUI wrapper for [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
 ---
 
-## Install via Homebrew (recommended)
+## Installation
 
+**Homebrew (recommended)** — it manages Python, tkinter, yt-dlp, and ffmpeg for you.
 
 ```bash
-brew tap hiimkimchi/ytdlpgui
-brew install ytdlpgui
+brew install hiimkimchi/ytdlpgui/ytdlpgui
 ```
 
-Then launch:
+To add the app to **/Applications** (so it appears in Finder and Spotlight), run once after install:
+
+```bash
+ln -sf "/opt/homebrew/opt/ytdlpgui/Applications/ytdlp gui.app" "/Applications/ytdlp gui.app"
+```
+
+Then launch from the terminal or by opening the app from Finder/Spotlight:
 
 ```bash
 ytdlpgui
 ```
 
-This will also install **yt-dlp** and **ffmpeg** as dependencies if they aren't already present.
+Homebrew installs **yt-dlp** and **ffmpeg** as dependencies if they aren't already present.
 
 ---
 
@@ -49,15 +55,32 @@ ytdlpgui
 
 ## Build a standalone .app bundle
 
+You need a Python with tkinter to build (so the app can open). If you use Homebrew Python, install it first:
+
+```bash
+brew install python-tk@3.12
+```
+
+Then build the app:
+
 ```bash
 git clone https://github.com/hiimkimchi/ytdlp-gui.git
 cd ytdlp-gui
 chmod +x extras/build_app.sh
 ./extras/build_app.sh
-
-# Then drag to /Applications:
-cp -r "dist/ytdlp gui.app" /Applications/
 ```
+
+Install and launch:
+
+```bash
+# Copy to Applications (then launch from Finder or Spotlight)
+cp -r "dist/ytdlp gui.app" /Applications/
+
+# Or run once from the project:
+open "dist/ytdlp gui.app"
+```
+
+The .app bundles its own Python and dependencies; **yt-dlp** and **ffmpeg** must still be installed on the Mac (e.g. `brew install yt-dlp ffmpeg`).
 
 ---
 
