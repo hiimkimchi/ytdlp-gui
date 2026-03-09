@@ -11,10 +11,13 @@ PROGRESS_RE = re.compile(
 
 
 def build_cmd(ytdlp: str, mode: str, quality: str, fmt: str,
-              out_dir: str, url: str) -> list[str]:
+              out_dir: str, url: str, *, ffmpeg_dir: str | None = None) -> list[str]:
     """Build the yt-dlp command list from the current settings."""
     url = normalize_single_video_url(url)
     cmd = [ytdlp, "--newline"]
+
+    if ffmpeg_dir:
+        cmd += ["--ffmpeg-location", ffmpeg_dir]
 
     if mode == "audio":
         cmd += ["-x", "--audio-format", fmt, "--audio-quality", "0"]

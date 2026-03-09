@@ -1,4 +1,5 @@
 from urllib.parse import urlparse, parse_qs, urlunparse
+import os
 import subprocess
 
 def normalize_single_video_url(url: str) -> str:
@@ -12,7 +13,7 @@ def normalize_single_video_url(url: str) -> str:
         if "v" in qs:
             vid = qs["v"][0]
             return f"https://www.youtube.com/watch?v={vid}"
-            
+
     # youtu.be/VIDEO_ID?list=...
     if parsed.netloc == "youtu.be" and parsed.path:
         vid = parsed.path.lstrip("/").split("?")[0]
@@ -29,4 +30,20 @@ def find_ytdlp() -> str | None:
             return candidate
         except (FileNotFoundError, subprocess.CalledProcessError):
             continue
+    return None
+
+
+def find_ffmpeg_dir() -> str | None:
+    """Return directory containing ffmpeg and ffprobe, or None.
+    Checks Homebrew paths first so GUI launches (no shell PATH) still find ffmpeg.
+    """
+    for dir_candidate in ("/opt/homebrew/bin", "/usr/local/bin"):
+        ffmpeg = os.path.join(dir_candidate, "ffmpeg")
+        ffprobe = os.path.join(dir_candidate, "ffprobe")
+        if os.path.isfile(ffmpeg) and os.path.isfile(ffprobe):
+            try:
+                subprocess.run([ffmpeg, "-version"], capture_output=True, check=True)
+                return dir_candidate
+            except (FileNotFoundError, subprocess.CalledProcessError):
+                continue
     return None

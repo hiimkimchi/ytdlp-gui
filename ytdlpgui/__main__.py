@@ -7,7 +7,7 @@ from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 
 from .const import THEMES
-from .helpers import find_ytdlp
+from .helpers import find_ffmpeg_dir, find_ytdlp
 from .widgets import ThemeMixin
 from .downloader import build_cmd, DownloadRunner
 from .prefs import load_prefs, save_prefs
@@ -260,8 +260,15 @@ class App(ThemeMixin, tk.Tk):
         self._set_status("Starting…", self.colors["TEXT_DIM"])
         self._log_clear()
 
-        cmd = build_cmd(self.ytdlp, self.mode_var.get(), self.quality_var.get(),
-                        self.fmt_var.get(), self.out_var.get(), url)
+        cmd = build_cmd(
+            self.ytdlp,
+            self.mode_var.get(),
+            self.quality_var.get(),
+            self.fmt_var.get(),
+            self.out_var.get(),
+            url,
+            ffmpeg_dir=find_ffmpeg_dir(),
+        )
         self._log(f"$ {' '.join(cmd)}\n")
 
         self._runner = DownloadRunner(
