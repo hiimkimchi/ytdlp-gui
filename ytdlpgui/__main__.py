@@ -2,6 +2,7 @@
 ytdlpgui — a minimal macOS GUI wrapper around yt-dlp
 """
 
+import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
@@ -11,6 +12,8 @@ from .helpers import find_ffmpeg_dir, find_ytdlp
 from .widgets import ThemeMixin
 from .downloader import build_cmd, DownloadRunner
 from .prefs import load_prefs, save_prefs
+from .stems import (AUDIO_FILETYPES, STEMS, StemRunner, build_stem_cmd,
+                    find_demucs, prune_stems, stems_dir)
 
 
 class App(ThemeMixin, tk.Tk):
@@ -92,9 +95,27 @@ class App(ThemeMixin, tk.Tk):
         self._theme_widgets.append((self, {"bg": "BG"}))
         self._theme_widgets.append((body, {"bg": "BG"}))
 
-        # URL
-        self._label(body, "URL")
-        url_row = tk.Frame(body, bg=c["BG"])
+        # tabs
+        tab_row = tk.Frame(body, bg=c["BG"])
+        tab_row.pack(fill="x", pady=(0, 20))
+        self._theme_widgets.append((tab_row, {"bg": "BG"}))
+
+        self.tab_var = tk.StringVar(value=self.prefs.get("tab", "youtube"))
+        if self.tab_var.get() not in ("youtube", "stems"):
+            self.tab_var.set("youtube")
+        self._toggle_btn(tab_row, "YouTube Download", "youtube", self.tab_var, self._on_tab)
+        self._toggle_btn(tab_row, "Stem Splitter", "stems", self.tab_var, self._on_tab)
+
+        tab_host = tk.Frame(body, bg=c["BG"])
+        tab_host.pack(fill="x")
+        self._theme_widgets.append((tab_host, {"bg": "BG"}))
+
+        # youtube view
+        self.yt_view = tk.Frame(tab_host, bg=c["BG"])
+        self._theme_widgets.append((self.yt_view, {"bg": "BG"}))
+
+        self._label(self.yt_view, "URL")
+        url_row = tk.Frame(self.yt_view, bg=c["BG"])
         url_row.pack(fill="x", pady=(4, 16))
         self._theme_widgets.append((url_row, {"bg": "BG"}))
 
@@ -105,6 +126,44 @@ class App(ThemeMixin, tk.Tk):
 
         paste_btn = self._btn(url_row, "Paste", self._paste_url, style="ghost")
         paste_btn.pack(side="left", padx=(8, 0))
+
+        # stem splitter view
+        self.stem_view = tk.Frame(tab_host, bg=c["BG"])
+        self._theme_widgets.append((self.stem_view, {"bg": "BG"}))
+
+        self._label(self.stem_view, "FILE")
+        file_row = tk.Frame(self.stem_view, bg=c["BG"])
+        file_row.pack(fill="x", pady=(4, 16))
+        self._theme_widgets.append((file_row, {"bg": "BG"}))
+
+        self.stem_file_var = tk.StringVar(value="")
+        self.stem_file_label = tk.Label(
+            file_row, text="Click to choose an audio file…", anchor="w",
+            font=("Helvetica Neue", 13), bg=c["SURFACE"], fg=c["MUTED"],
+            padx=6, pady=4, cursor="hand2", highlightthickness=1,
+            highlightbackground=c["BORDER"],
+        )
+        self.stem_file_label.pack(side="left", fill="x", expand=True)
+        self.stem_file_label.bind("<Button-1>", lambda e: self._choose_stem_file())
+        self._theme_widgets.append((self.stem_file_label,
+                                    {"bg": "SURFACE", "highlightbackground": "BORDER"}))
+        self.stem_file_label._refresh = lambda: self.stem_file_label.config(
+            fg=self.colors["TEXT" if self.stem_file_var.get() else "MUTED"])
+        self._theme_toggle_btns.append(self.stem_file_label)
+
+        choose_btn = self._btn(file_row, "Choose…", self._choose_stem_file, style="ghost")
+        choose_btn.pack(side="left", padx=(8, 0))
+
+        self._label(self.stem_view, "STEMS")
+        stems_row = tk.Frame(self.stem_view, bg=c["BG"])
+        stems_row.pack(fill="x", pady=(4, 16))
+        self._theme_widgets.append((stems_row, {"bg": "BG"}))
+
+        saved_stems = self.prefs.get("stems", list(STEMS))
+        self.stem_vars = {}
+        for label in STEMS:
+            self.stem_vars[label] = tk.BooleanVar(value=label in saved_stems)
+            self._check_btn(stems_row, label, self.stem_vars[label])
 
         # output folder entry and browse button
         self._label(body, "SAVE TO")
@@ -168,7 +227,7 @@ class App(ThemeMixin, tk.Tk):
         btn_row.pack(fill="x", pady=(0, PAD))
         self._theme_widgets.append((btn_row, {"bg": "BG"}))
 
-        self.dl_btn = self._btn(btn_row, "Download", self._start_download, style="primary")
+        self.dl_btn = self._btn(btn_row, "Download", self._start, style="primary")
         self.dl_btn.pack(side="left", fill="x", expand=True)
 
         self.stop_btn = self._btn(btn_row, "Stop", self._stop_download, style="danger")
@@ -179,7 +238,101 @@ class App(ThemeMixin, tk.Tk):
         clear_btn = self._btn(btn_row, "Clear log", self._clear_log, style="ghost")
         clear_btn.pack(side="left", padx=(8, 0))
 
+        self._on_tab()
+
     # app actions
+    def _on_tab(self):
+        for btn in self._toggle_btns:
+            btn._refresh()
+        stems = self.tab_var.get() == "stems"
+        self.yt_view.pack_forget()
+        self.stem_view.pack_forget()
+        (self.stem_view if stems else self.yt_view).pack(fill="x")
+        self.dl_btn.config(text="Split stems" if stems else "Download")
+        if self.winfo_ismapped():
+            self.update_idletasks()
+            self.geometry(f"{self.winfo_width()}x{self.winfo_reqheight()}")
+
+    def _choose_stem_file(self):
+        current = self.stem_file_var.get()
+        path = filedialog.askopenfilename(
+            title="Choose a song to split",
+            initialdir=str(Path(current).parent) if current else self.out_var.get(),
+            filetypes=AUDIO_FILETYPES,
+        )
+        if path:
+            self.stem_file_var.set(path)
+            self.stem_file_label.config(text=Path(path).name)
+            self.stem_file_label._refresh()
+
+    def _start(self):
+        if self.tab_var.get() == "stems":
+            self._start_split()
+        else:
+            self._start_download()
+
+    def _begin_run(self, status):
+        self._save_prefs()
+        self.running = True
+        self.dl_btn._disabled = True
+        self.dl_btn.config(fg=self.colors["MUTED"])
+        self.stop_btn._disabled = False
+        self.stop_btn.config(fg=self.colors["RED"])
+        self._set_progress(0)
+        self._set_status(status, self.colors["TEXT_DIM"])
+        self.meta_var.set("")
+        self._log_clear()
+
+    def _start_split(self):
+        demucs = find_demucs()
+        if not demucs:
+            self._warn_missing_demucs()
+            return
+
+        track = self.stem_file_var.get()
+        if not track or not Path(track).is_file():
+            messagebox.showwarning("No file", "Please choose an audio file to split.")
+            return
+
+        keep = [STEMS[label] for label, var in self.stem_vars.items() if var.get()]
+        if not keep:
+            messagebox.showwarning("No stems", "Please select at least one stem.")
+            return
+
+        out_dir = self.out_var.get()
+        self._begin_run("Loading model…")
+
+        env = os.environ.copy()
+        ffmpeg_dir = find_ffmpeg_dir()
+        if ffmpeg_dir:
+            env["PATH"] = ffmpeg_dir + os.pathsep + env.get("PATH", "")
+
+        cmd = build_stem_cmd(demucs, track, out_dir, keep)
+        self._log(f"$ {' '.join(cmd)}\n")
+
+        def _done(rc, exc=None):
+            if rc == 0 and exc is None:
+                prune_stems(out_dir, track, keep)
+                folder = stems_dir(out_dir, track)
+                self.after(0, lambda: self._log(f"\nStems saved to {folder}\n"))
+            self._on_done(rc, exc)
+
+        self._runner = StemRunner(
+            cmd,
+            on_line=lambda line: self.after(0, lambda l=line: self._log(l + "\n")),
+            on_progress=self._on_stem_progress,
+            on_status=self._on_dl_status,
+            on_done=_done,
+            env=env,
+        )
+        self._runner.start()
+
+    def _on_stem_progress(self, pct, elapsed, remaining):
+        self.after(0, lambda: self._set_progress(pct))
+        self.after(0, lambda: self._set_status(f"Splitting  {int(pct * 100)}%",
+                                               self.colors["ACCENT"]))
+        self.after(0, lambda: self.meta_var.set(f"{elapsed} elapsed  •  ETA {remaining}"))
+
     def _paste_url(self):
         try:
             text = self.clipboard_get()
@@ -203,15 +356,7 @@ class App(ThemeMixin, tk.Tk):
             messagebox.showwarning("No URL", "Please enter a URL to download.")
             return
 
-        self._save_prefs()
-        self.running = True
-        self.dl_btn._disabled = True
-        self.dl_btn.config(fg=self.colors["MUTED"])
-        self.stop_btn._disabled = False
-        self.stop_btn.config(fg=self.colors["RED"])
-        self._set_progress(0)
-        self._set_status("Starting…", self.colors["TEXT_DIM"])
-        self._log_clear()
+        self._begin_run("Starting…")
 
         cmd = build_cmd(
             self.ytdlp,
@@ -248,6 +393,8 @@ class App(ThemeMixin, tk.Tk):
             self.after(0, lambda: self._set_status("Processing…", self.colors["TEXT_DIM"]))
         elif status == "downloading":
             self.after(0, lambda: self._set_status("Downloading…", self.colors["ACCENT"]))
+        elif status == "splitting":
+            self.after(0, lambda: self._set_status("Splitting…", self.colors["ACCENT"]))
 
     def _on_done(self, rc, exc=None):
         if exc:
@@ -308,6 +455,8 @@ class App(ThemeMixin, tk.Tk):
         self.prefs = {
             "last_url": self.url_var.get(),
             "out_dir":  self.out_var.get(),
+            "tab":      self.tab_var.get(),
+            "stems":    [label for label, var in self.stem_vars.items() if var.get()],
             "theme":    self.theme,
         }
         save_prefs(self.prefs_path, self.prefs)
@@ -334,6 +483,14 @@ class App(ThemeMixin, tk.Tk):
             "Install it with:\n\n  brew install yt-dlp\n\n"
             "See the documentation for other options:\n"
             "https://github.com/yt-dlp/yt-dlp#installation"
+        )
+
+    def _warn_missing_demucs(self):
+        messagebox.showwarning(
+            "demucs not found",
+            "demucs is needed for the Stem Splitter.\n\n"
+            "Install it with:\n\n  uv tool install demucs --with numpy\n\n"
+            "or:\n\n  pipx install demucs && pipx inject demucs numpy"
         )
 
     def _center(self):

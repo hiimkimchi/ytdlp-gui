@@ -103,6 +103,32 @@ class ThemeMixin:
         self._toggle_btns.append(lbl)
         self._theme_toggle_btns.append(lbl)
 
+    def _check_btn(self, parent, label, var):
+        """Multi-select toggle bound to a BooleanVar."""
+        c = self.colors
+        lbl = tk.Label(
+            parent, text=label,
+            bg=c["BTN"], fg=c["TEXT_DIM"],
+            font=("Helvetica Neue", 12), padx=14, pady=6, cursor="hand2",
+        )
+
+        def _refresh():
+            cc = self.colors
+            active = var.get()
+            lbl.config(bg=cc["TOGGLE_ON"] if active else cc["BTN"],
+                       fg=cc["TOGGLE_FG"] if active else cc["TEXT_DIM"])
+
+        def _click(e):
+            var.set(not var.get())
+            _refresh()
+
+        lbl.bind("<Button-1>", _click)
+        _refresh()
+        lbl.pack(side="left", padx=(0, 6))
+        lbl._refresh = _refresh
+        self._theme_toggle_btns.append(lbl)
+        return lbl
+
     def _dropdown(self, parent, var, options):
         c = self.colors
         s = ttk.Style()

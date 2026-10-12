@@ -8,7 +8,8 @@ A minimal macOS GUI wrapper for [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
 ## Features
 
-- Download best-quality audio as mp3 from any yt-dlp–supported site
+- **YouTube Download** — best-quality audio as mp3 from any yt-dlp–supported site
+- **Stem Splitter** — split a song into Vocals, Drums, Instruments, and Bass with [demucs](https://github.com/adefossez/demucs)
 - Live progress bar with speed & ETA
 - Scrollable log pane
 - Preferences saved between sessions
@@ -37,6 +38,8 @@ ytdlpgui
 
 Homebrew installs **yt-dlp** and **ffmpeg** as dependencies if they aren't already present.
 
+The first stem split downloads the demucs model (~80 MB). Stems are saved as mp3 to `<Save To>/htdemucs/<song name>/`.
+
 ---
 
 ## Install via pip
@@ -60,5 +63,6 @@ ytdlpgui
 | Python     | ≥ 3.10   |
 | yt-dlp     | latest   |
 | ffmpeg     | any      |
+| demucs     | ≥ 4.1    |
 
 ---

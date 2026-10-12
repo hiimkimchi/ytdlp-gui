@@ -38,8 +38,10 @@ class DownloadRunner:
                  on_line: callable = None,
                  on_progress: callable = None,
                  on_status: callable = None,
-                 on_done: callable = None):
+                 on_done: callable = None,
+                 env: dict | None = None):
         self.cmd = cmd
+        self.env = env
         self.on_line = on_line
         self.on_progress = on_progress
         self.on_status = on_status
@@ -59,11 +61,11 @@ class DownloadRunner:
         try:
             self.proc = subprocess.Popen(
                 self.cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, bufsize=1,
+                text=True, bufsize=1, env=self.env,
             )
             for line in self.proc.stdout:
                 line = line.rstrip()
-                if self.on_line:
+                if self.on_line and not self._is_noise(line):
                     self.on_line(line)
                 self._parse_line(line)
 
@@ -76,6 +78,10 @@ class DownloadRunner:
                 self.on_done(None, exc)
         finally:
             self.proc = None
+
+    def _is_noise(self, line: str) -> bool:
+        """Lines that update progress but shouldn't be echoed to the log."""
+        return False
 
     def _parse_line(self, line: str):
         m = PROGRESS_RE.search(line)
