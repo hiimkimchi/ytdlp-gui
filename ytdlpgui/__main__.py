@@ -106,38 +106,6 @@ class App(ThemeMixin, tk.Tk):
         paste_btn = self._btn(url_row, "Paste", self._paste_url, style="ghost")
         paste_btn.pack(side="left", padx=(8, 0))
 
-        # video / audio mode toggle
-        self._label(body, "MODE")
-        mode_row = tk.Frame(body, bg=c["BG"])
-        mode_row.pack(fill="x", pady=(4, 16))
-        self._theme_widgets.append((mode_row, {"bg": "BG"}))
-
-        self.mode_var = tk.StringVar(value=self.prefs.get("mode", "video"))
-        self._toggle_btn(mode_row, "Video", "video", self.mode_var, self._on_mode)
-        self._toggle_btn(mode_row, "Audio only", "audio", self.mode_var, self._on_mode)
-
-        # quality / format dropdowns
-        fmt_row = tk.Frame(body, bg=c["BG"])
-        fmt_row.pack(fill="x", pady=(0, 16))
-        self._theme_widgets.append((fmt_row, {"bg": "BG"}))
-
-        left_col = tk.Frame(fmt_row, bg=c["BG"])
-        left_col.pack(side="left", fill="x", expand=True, padx=(0, 12))
-        self._theme_widgets.append((left_col, {"bg": "BG"}))
-        self._label(left_col, "QUALITY")
-        self.quality_var = tk.StringVar(value=self.prefs.get("quality", "Best"))
-        self.quality_menu = self._dropdown(left_col, self.quality_var,
-                                           ["Best", "1080p", "720p", "480p", "360p", "Worst"])
-
-        right_col = tk.Frame(fmt_row, bg=c["BG"])
-        right_col.pack(side="left", fill="x", expand=True)
-        self._theme_widgets.append((right_col, {"bg": "BG"}))
-        self._label(right_col, "FORMAT")
-        self.fmt_var = tk.StringVar(value=self.prefs.get("fmt", "mp4"))
-        self.fmt_menu = self._dropdown(right_col, self.fmt_var,
-                                       ["mp4", "mkv", "webm", "mov", "mp3", "m4a", "flac", "wav"])
-        self._on_mode()
-
         # output folder entry and browse button
         self._label(body, "SAVE TO")
         out_row = tk.Frame(body, bg=c["BG"])
@@ -212,21 +180,6 @@ class App(ThemeMixin, tk.Tk):
         clear_btn.pack(side="left", padx=(8, 0))
 
     # app actions
-    def _on_mode(self):
-        for btn in getattr(self, "_toggle_btns", []):
-            btn._refresh()
-        mode = self.mode_var.get()
-        if mode == "audio":
-            self.fmt_menu.configure(values=["mp3", "m4a", "flac", "wav", "opus"])
-            if self.fmt_var.get() not in ("mp3", "m4a", "flac", "wav", "opus"):
-                self.fmt_var.set("mp3")
-            self.quality_menu.configure(state="disabled")
-        else:
-            self.fmt_menu.configure(values=["mp4", "mkv", "webm", "mov"])
-            if self.fmt_var.get() not in ("mp4", "mkv", "webm", "mov"):
-                self.fmt_var.set("mp4")
-            self.quality_menu.configure(state="readonly")
-
     def _paste_url(self):
         try:
             text = self.clipboard_get()
@@ -262,9 +215,9 @@ class App(ThemeMixin, tk.Tk):
 
         cmd = build_cmd(
             self.ytdlp,
-            self.mode_var.get(),
-            self.quality_var.get(),
-            self.fmt_var.get(),
+            "audio",
+            "Best",
+            "mp3",
             self.out_var.get(),
             url,
             ffmpeg_dir=find_ffmpeg_dir(),
@@ -354,9 +307,6 @@ class App(ThemeMixin, tk.Tk):
     def _save_prefs(self):
         self.prefs = {
             "last_url": self.url_var.get(),
-            "mode":     self.mode_var.get(),
-            "quality":  self.quality_var.get(),
-            "fmt":      self.fmt_var.get(),
             "out_dir":  self.out_var.get(),
             "theme":    self.theme,
         }

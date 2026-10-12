@@ -8,9 +8,7 @@ A minimal macOS GUI wrapper for [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
 ## Features
 
-- Download video or audio-only from any yt-dlp–supported site
-- Quality selector: Best / 1080p / 720p / 480p / 360p / Worst
-- Format selector: mp4, mkv, webm, mov — or mp3, m4a, flac, wav for audio
+- Download best-quality audio as mp3 from any yt-dlp–supported site
 - Live progress bar with speed & ETA
 - Scrollable log pane
 - Preferences saved between sessions
