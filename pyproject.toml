@@ -10,9 +10,9 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 # tkinter ships with macOS Python — no extra UI dep needed
-# yt-dlp is a runtime dep (or installed separately via brew)
+# yt-dlp's deno extra ships a prebuilt JS runtime that YouTube extraction needs
 # demucs imports numpy but only declares it on Intel Macs
-dependencies = ["demucs>=4.1", "numpy"]
+dependencies = ["yt-dlp[default,deno]", "demucs>=4.1", "numpy"]
 
 [project.scripts]
 ytdlpgui = "ytdlpgui.__main__:main"

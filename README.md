@@ -36,7 +36,7 @@ Then launch from the terminal or by opening the app from Finder/Spotlight:
 ytdlpgui
 ```
 
-Homebrew installs **yt-dlp**, **ffmpeg**, and **demucs** (with PyTorch, ~650 MB) as dependencies.
+Homebrew installs **ffmpeg**, plus **yt-dlp** (with the deno JS runtime) and **demucs** (with PyTorch, ~650 MB) inside the app.
 
 The first stem split downloads the demucs model (~80 MB). Stems are saved as mp3 to `<Save To>/htdemucs/<song name>/`.
 
@@ -49,9 +49,9 @@ pip install git+https://github.com/hiimkimchi/ytdlp-gui.git
 ytdlpgui
 ```
 
-> **Note:** You still need `yt-dlp` and `ffmpeg` on your PATH:
+> **Note:** yt-dlp and demucs are installed with it, but you still need `ffmpeg`:
 > ```bash
-> brew install yt-dlp ffmpeg
+> brew install ffmpeg
 > ```
 
 ---

@@ -1,6 +1,8 @@
 from urllib.parse import urlparse, parse_qs, urlunparse
+from pathlib import Path
 import os
 import subprocess
+import sys
 
 def normalize_single_video_url(url: str) -> str:
     """Strip playlist/mix params from YouTube URLs so only the single video is downloaded."""
@@ -23,8 +25,12 @@ def normalize_single_video_url(url: str) -> str:
 
 
 def find_ytdlp() -> str | None:
-    """Return path to yt-dlp binary or None."""
-    for candidate in ("yt-dlp", "/opt/homebrew/bin/yt-dlp", "/usr/local/bin/yt-dlp"):
+    """Return path to yt-dlp binary or None.
+    Prefers the yt-dlp installed alongside this Python, since GUI launches
+    don't have the venv's bin on PATH.
+    """
+    bundled = str(Path(sys.executable).parent / "yt-dlp")
+    for candidate in (bundled, "yt-dlp", "/opt/homebrew/bin/yt-dlp", "/usr/local/bin/yt-dlp"):
         try:
             subprocess.run([candidate, "--version"], capture_output=True, check=True)
             return candidate
