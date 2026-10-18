@@ -12,6 +12,7 @@ from .helpers import find_ffmpeg_dir, find_ytdlp
 from .widgets import ThemeMixin
 from .downloader import build_cmd, DownloadRunner
 from .prefs import load_prefs, save_prefs
+from .updater import build_update_cmd
 from .stems import (AUDIO_FILETYPES, STEMS, StemRunner, build_stem_cmd,
                     find_demucs, prune_stems, stems_dir)
 
@@ -72,10 +73,16 @@ class App(ThemeMixin, tk.Tk):
         title_dim.pack(side="left")
         self._theme_widgets.append((title_dim, {"fg": "TEXT_DIM", "bg": "BG"}))
 
-        version_label = tk.Label(header, text='yt-dlp v' + self._ytdlp_version(),
-                                 font=("Menlo", 10), fg=c["MUTED"], bg=c["BG"])
-        version_label.pack(side="right", pady=8)
-        self._theme_widgets.append((version_label, {"fg": "MUTED", "bg": "BG"}))
+        self.version_label = tk.Label(header, text='yt-dlp v' + self._ytdlp_version(),
+                                      font=("Menlo", 10), fg=c["MUTED"], bg=c["BG"])
+        self.version_label.pack(side="right", pady=8)
+        self._theme_widgets.append((self.version_label, {"fg": "MUTED", "bg": "BG"}))
+
+        self.update_btn = tk.Label(header, text="Update", font=("Helvetica Neue", 11),
+                                   bg=c["BTN"], fg=c["TEXT_DIM"], padx=8, pady=4, cursor="hand2")
+        self.update_btn.bind("<Button-1>", lambda e: self._start_update())
+        self.update_btn.pack(side="right", padx=(0, 12))
+        self._theme_widgets.append((self.update_btn, {"bg": "BTN", "fg": "TEXT_DIM"}))
 
         self._theme_btn = tk.Label(header, text="☀" if self.theme == "dark" else "☽",
                                    font=("Helvetica Neue", 14),
@@ -324,6 +331,36 @@ class App(ThemeMixin, tk.Tk):
             on_status=self._on_dl_status,
             on_done=_done,
             env=env,
+        )
+        self._runner.start()
+
+    def _start_update(self):
+        if self.running:
+            return
+        cmd = build_update_cmd()
+        if not cmd:
+            messagebox.showinfo(
+                "Update unavailable",
+                "Updating is only available in the installed app.\n\n"
+                "Update yt-dlp and demucs with your package manager instead.",
+            )
+            return
+
+        self._begin_run("Updating yt-dlp and demucs…")
+        self._set_status("Updating yt-dlp and demucs…", self.colors["ACCENT"])
+        self._log(f"$ {' '.join(cmd)}\n")
+
+        def _done(rc, exc=None):
+            if rc == 0 and exc is None:
+                self.ytdlp = find_ytdlp()
+                self.after(0, lambda: self.version_label.config(
+                    text='yt-dlp v' + self._ytdlp_version()))
+            self._on_done(rc, exc)
+
+        self._runner = DownloadRunner(
+            cmd,
+            on_line=lambda line: self.after(0, lambda l=line: self._log(l + "\n")),
+            on_done=_done,
         )
         self._runner.start()
 
