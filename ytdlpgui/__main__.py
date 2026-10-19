@@ -314,25 +314,34 @@ class App(ThemeMixin, tk.Tk):
         if ffmpeg_dir:
             env["PATH"] = ffmpeg_dir + os.pathsep + env.get("PATH", "")
 
-        cmd = build_stem_cmd(demucs, track, out_dir, keep)
-        self._log(f"$ {' '.join(cmd)}\n")
+        def _run(device=None):
+            cmd = build_stem_cmd(demucs, track, out_dir, keep, device=device)
+            self.after(0, lambda: self._log(f"$ {' '.join(cmd)}\n"))
+            runner = StemRunner(
+                cmd,
+                on_line=lambda line: self.after(0, lambda l=line: self._log(l + "\n")),
+                on_progress=self._on_stem_progress,
+                on_status=self._on_dl_status,
+                on_done=lambda rc, exc=None: _done(runner, device, rc, exc),
+                env=env,
+            )
+            self._runner = runner
+            runner.start()
 
-        def _done(rc, exc=None):
+        def _done(runner, device, rc, exc):
+            if rc not in (0, -15) and exc is None and device is None and runner.mps_failed:
+                msg = "GPU can't split this track; retrying on CPU (slower)…"
+                self.after(0, lambda: self._set_status(msg, self.colors["TEXT_DIM"]))
+                self.after(0, lambda: self._log(f"\n{msg}\n\n"))
+                _run("cpu")
+                return
             if rc == 0 and exc is None:
                 prune_stems(out_dir, track, keep)
                 folder = stems_dir(out_dir, track)
                 self.after(0, lambda: self._log(f"\nStems saved to {folder}\n"))
             self._on_done(rc, exc)
 
-        self._runner = StemRunner(
-            cmd,
-            on_line=lambda line: self.after(0, lambda l=line: self._log(l + "\n")),
-            on_progress=self._on_stem_progress,
-            on_status=self._on_dl_status,
-            on_done=_done,
-            env=env,
-        )
-        self._runner.start()
+        _run()
 
     def _start_update(self):
         if self.running:

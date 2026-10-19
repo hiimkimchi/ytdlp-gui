@@ -44,9 +44,11 @@ def stems_dir(out_dir: str, track_path: str) -> Path:
 
 
 def build_stem_cmd(demucs: list[str], track_path: str, out_dir: str,
-                   stems: list[str]) -> list[str]:
+                   stems: list[str], device: str | None = None) -> list[str]:
     """Build the demucs command. `stems` are demucs source names."""
     cmd = demucs + ["-n", MODEL, "--mp3", "-o", out_dir]
+    if device:
+        cmd += ["-d", device]
     if len(stems) == 1:
         cmd += ["--two-stems", stems[0], "--other-method", "none"]
     cmd.append(track_path)
@@ -64,10 +66,16 @@ def prune_stems(out_dir: str, track_path: str, keep: list[str]) -> None:
 class StemRunner(DownloadRunner):
     """Runs demucs in a background thread, reporting tqdm progress."""
 
+    mps_failed = False
+
     def _is_noise(self, line: str) -> bool:
         return bool(TQDM_RE.search(line))
 
     def _parse_line(self, line: str):
+        # Some ops (e.g. large conv1d on macOS 14) aren't supported by Apple's
+        # GPU backend; the caller retries those runs on the CPU.
+        if "MPS" in line and ("not supported" in line or "NotImplementedError" in line):
+            self.mps_failed = True
         m = TQDM_RE.search(line)
         if m and self.on_progress:
             self.on_progress(int(m.group(1)) / 100, m.group(2), m.group(3))
